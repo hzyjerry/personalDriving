@@ -17,12 +17,12 @@ import time_profile
 import utils
 from utils import shape, jacobian, hessian, grad
 import pdb as pdb
-import ilqgames.python.CarExample as unicycle
+#import ilqgames.python.CarExample as unicycle
 #pdb.set_trace()
 #import ilqgames.python.two_player_unicycle_4d_example as unicycle
 
 class Maximizer(object):
-    def __init__(self, f, vs, g={}, pre=None, gen=None, method='lbfgs', eps=1, iters=100000, debug=False, inf_ignore=np.inf):
+    def __init__(self, f, vs, g={}, pre=None, gen=None, method='bfgs', eps=1, iters=100000, debug=False, inf_ignore=np.inf):
         self.inf_ignore = inf_ignore
         self.debug = debug
         self.iters = iters
@@ -45,10 +45,10 @@ class Maximizer(object):
         else:
             self.df = g
         self.new_vs = [tt.vector() for v in self.vs]
-        self.func = th.function(self.new_vs, [-self.f, -self.df], givens=zip(self.vs, self.new_vs))
+        self.func = th.function(self.new_vs, [-self.f, -self.df], givens=zip(self.vs, self.new_vs), on_unused_input='warn')
         def f_and_df(x0):
             if self.debug:
-                print x0
+                print(x0)
             s = None
             N = 0
             for _ in self.gen():
@@ -1115,7 +1115,7 @@ class HierarchicalMaximizer(NestedMaximizer):
     # while the terminal rewards given as the value functions of the strategic level
     # is loaded into the class as grids. To get the value from the value functions,
     # grid interpltion is used (see code below for details).
-    def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n, 
+    def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n,
         proj, traj_truck=None, use_timeup=True, use_second_order=False,
         init_plan_scheme='prev_opt',
         disc_grid=None, step_grid=None, vH_grid=None, vR_grid=None):
@@ -1135,9 +1135,9 @@ class HierarchicalMaximizer(NestedMaximizer):
         # ---------------------------------------------------------------------------------------------------
         # Basics.
 
-        NestedMaximizer.__init__(self, r_h, traj_h, r_r, traj_r, 
-            use_timeup=use_timeup, 
-            use_second_order=use_second_order, 
+        NestedMaximizer.__init__(self, r_h, traj_h, r_r, traj_r,
+            use_timeup=use_timeup,
+            use_second_order=use_second_order,
             update_with_curr_plan_fn=self.update_corners,
             init_plan_scheme=init_plan_scheme,
             init_grads=False)
@@ -1151,10 +1151,10 @@ class HierarchicalMaximizer(NestedMaximizer):
         # ---------------------------------------------------------------------------------------------------
         # Shared varables.
 
-        # Grid interpolation is done with the grid corners of the current grid 
-        # cell the state is in. These grid corners are shared variables which 
-        # are updated as the state is updated. Since the grid step lengths 
-        # are given, only the lower corners (self.cell_corners below) are needed 
+        # Grid interpolation is done with the grid corners of the current grid
+        # cell the state is in. These grid corners are shared variables which
+        # are updated as the state is updated. Since the grid step lengths
+        # are given, only the lower corners (self.cell_corners below) are needed
         # as shared variables.
         self.cell_corners = th.shared(np.zeros(self.n)) # corners of each box in grid
         # corners for human value function
@@ -1164,7 +1164,7 @@ class HierarchicalMaximizer(NestedMaximizer):
 
         # ---------------------------------------------------------------------------------------------------
         # Load grid data.
-        if (disc_grid is None or step_grid is None or vH_grid is None or 
+        if (disc_grid is None or step_grid is None or vH_grid is None or
                     vR_grid is None):
             self.disc_grid, self.step_grid, self.vH_grid, self.vR_grid = (
                 utils.load_grid_data(mat_name, n=self.n))
@@ -1183,7 +1183,7 @@ class HierarchicalMaximizer(NestedMaximizer):
         self.x_strat_func = th.function([], self.x_strat)
 
         def value_function(value_corners):
-            return HierarchicalMaximizer.value_function_fn(self.x_strat, 
+            return HierarchicalMaximizer.value_function_fn(self.x_strat,
                 self.cell_corners, value_corners, self.step_grid, self.n)
 
         self.vR = value_function(self.vR_corners) # robot value function
@@ -1206,13 +1206,13 @@ class HierarchicalMaximizer(NestedMaximizer):
 
     @staticmethod
     def value_function_fn(x_strat, cell_corners, value_corners, step_grid, n):
-        # Strategic value function computed using multilinear grid 
+        # Strategic value function computed using multilinear grid
         # interpolation.
         start_time = time.time()
         sumterms = []
         volume = step_grid.prod()
         for i in itertools.product(range(2), repeat=n):
-            partial_volume = [((-1)**(i[j]+1) * 
+            partial_volume = [((-1)**(i[j]+1) *
                                 (x_strat[j] - cell_corners[j]) +
                                 (1-i[j]) * step_grid[j]) for j in range(n)]
             partial_volume = np.asarray(partial_volume).prod() # convert to array to use prod.
@@ -1227,7 +1227,7 @@ class HierarchicalMaximizer(NestedMaximizer):
         # Update the corner values of the strategic cell grid by determining
         # which grid cell the current strategic state belongs to.
         cell_corners, vR_corners, vH_corners = (HierarchicalMaximizer
-            .update_corners_fn(self.x_strat_func(), self.n, 
+            .update_corners_fn(self.x_strat_func(), self.n,
                 self.disc_grid, self.vH_grid, self.vR_grid))
         self.cell_corners.set_value(cell_corners)
         self.vR_corners.set_value(vR_corners)
@@ -1240,7 +1240,7 @@ class HierarchicalMaximizer(NestedMaximizer):
         start_time = time.time()
         # outside (length n) has outside[i] True if the value of the strategi state
         # at that index is outside the strategic domain. Then either project back
-        # onto the strategic grid, or set the value function = 0 
+        # onto the strategic grid, or set the value function = 0
         # (i.e. just consider tactical reward)
         outside = []
         inds = []
@@ -1262,9 +1262,9 @@ class HierarchicalMaximizer(NestedMaximizer):
 
         # debugging
         # if outside:
-        #     print 'OUTSIDE grid interpolation!'
+        #     print('OUTSIDE grid interpolation!')
         # else:
-        #     print 'INSIDE grid interpolation'
+        #     print('INSIDE grid interpolation')
 
         cell_corners_new = np.array(cell_corners_new)
         # self.cell_corners.set_value(cell_corners_new)
@@ -1294,14 +1294,15 @@ class HierarchicalMaximizer(NestedMaximizer):
                     vH_corners_new[i] = vH_grid[gp_ind]
                     vR_corners_new[i] = vR_grid[gp_ind]
                 except Exception as e:
-                    print e
+                    print(e)
                     pdb.set_trace()
         # self.vH_corners.set_value(vH_corners_new)
         # self.vR_corners.set_value(vR_corners_new)
         end_time = time.time()
         time_profile.update_corners_time_profile.update(start_time, end_time)
         return cell_corners_new, vR_corners_new, vH_corners_new
-class ILQRMaximizer():
+
+"""class ILQRMaximizer():
     def __init__(self, r_h, traj_h, r_r, traj, dyn):
         self.r_h = r_h
         self.traj_h = traj_h
@@ -1310,12 +1311,12 @@ class ILQRMaximizer():
         self.dyn = dyn
     def maximize(self, bounds={}):
         #return unicycle.run()
-        return unicycle.run(self.traj.x0, None, None, self.dyn, self.r_r, self.r_h)
+        return unicycle.run(self.traj.x0, None, None, self.dyn, self.r_r, self.r_h)"""
 
 class PredictReactMaximizer(NestedMaximizer):
     def init_grads(self):
         """Initialize the gradients based on the rewards.
-        Precondition: the rewards (self.r_h and self.r_r) have already been 
+        Precondition: the rewards (self.r_h and self.r_r) have already been
         initialized.
         """
         # gradient of human reward wrt human controls
@@ -1343,7 +1344,7 @@ class PredictReactMaximizer(NestedMaximizer):
 
         # ------------------------------------------------------------------------------------------
         if self.use_second_order:
-            # OPTION 1: Full derivative computation with Hessian inversion. 
+            # OPTION 1: Full derivative computation with Hessian inversion.
             # SLOW, DEPRECATED
             # jacobian of (d human reward / d robot actions) w.r.t. human actions
             J = jacobian(grad(self.r_h, self.plan_r), self.plan_h)
@@ -1357,8 +1358,8 @@ class PredictReactMaximizer(NestedMaximizer):
         else:
             # OPTION 2: Partial derivative computation. FAST
             # (Only direct effect of robot action given current human action)
-            # Below is the simplified derivative that neglects the second-order 
-            # effect through human (and therefore avoids the heavy Hessian 
+            # Below is the simplified derivative that neglects the second-order
+            # effect through human (and therefore avoids the heavy Hessian
             # inversion)
             self.dr_r = grad(self.r_r, self.plan_r)
         # ------------------------------------------------------------------------------------------
@@ -1366,7 +1367,7 @@ class PredictReactMaximizer(NestedMaximizer):
         # negative robot reward and its derivative
         self.func2 = th.function([], [-self.r_r, -self.dr_r])
         def r_r_and_dr_r(plan_r_0):
-            """Get optimal human response, and return negative robot reward 
+            """Get optimal human response, and return negative robot reward
             and its derivative.
             - plan_r_0: initial value for robot plan."""
             start_time = time.time()
@@ -1409,7 +1410,7 @@ class PredictReactMaximizer(NestedMaximizer):
         #             B += [(None, None)]*(b-a)
         #     opt_bounds_list.append(B)
         # opt_robot_bounds, opt_human_bounds = opt_bounds_list
-        
+
         start_time = time.time()
         if not isinstance(bounds, dict): # convert bounds to dictionary
             bounds = {v: bounds for v in self.plan_r}
@@ -1419,7 +1420,7 @@ class PredictReactMaximizer(NestedMaximizer):
                 B += bounds[v]
             else:
                 B += [(None, None)]*(b-a)
-        
+
         opt_robot_bounds = B
         opt_human_bounds = B
 
@@ -1432,7 +1433,7 @@ class PredictReactMaximizer(NestedMaximizer):
             plan_r_0 = self.get_init_plan_r_fn(i)() # initialize the robot's plan
             # plan_r_0 = np.hstack([v.get_value() for v in self.plan_r])
             for j in range(self.num_optimizations_h):
-                
+
                 # debugging
                 # print('robot optimization iter:', i)
                 # print('human optimization iter:', j)
@@ -1441,7 +1442,7 @@ class PredictReactMaximizer(NestedMaximizer):
                 plan_h_0 = self.get_init_plan_h_fn(j)()
 
                 # optimal human control, value, etc.
-                opt_h = opt_timeup.fmin_l_bfgs_b_timeup(self.r_h_and_dr_h, 
+                opt_h = opt_timeup.fmin_l_bfgs_b_timeup(self.r_h_and_dr_h,
                     x0=plan_h_0, bounds=opt_human_bounds, t0=start_time, timeup=self.timeup)
                 opt_h_list.append(opt_h)
                 opt_plan_h = opt_h[0] # optimal human control
@@ -1452,7 +1453,7 @@ class PredictReactMaximizer(NestedMaximizer):
                     v.set_value(opt_plan_h[a:b])
 
                 # optimal robot control, value, etc.
-                opt_r = opt_timeup.fmin_l_bfgs_b_timeup(self.r_r_and_dr_r, 
+                opt_r = opt_timeup.fmin_l_bfgs_b_timeup(self.r_r_and_dr_r,
                     x0=plan_r_0, bounds=opt_robot_bounds, t0=start_time, timeup=self.timeup)
                 opt_r_list.append(opt_r)
 
@@ -1461,10 +1462,10 @@ class PredictReactMaximizer(NestedMaximizer):
         best_opt_r_idx = np.argmin(opt_r_vals)
         opt_r = opt_r_list[best_opt_r_idx]
         opt_plan_r = opt_r[0] # optimal robot control
-        
+
         opt_h = opt_h_list[best_opt_r_idx]
         opt_plan_h = opt_h[0] # human control corresponding to optimal robot control
-        
+
         # debugging
         # print('opt_r_list:', opt_r_list)
         # print('opt_r:', opt_r)
@@ -1482,7 +1483,7 @@ class PredictReactMaximizer(NestedMaximizer):
 
 # TODO: make this more modular so there isn't so much copied code
 class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
-    def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n, 
+    def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n,
         proj, traj_truck=None, use_timeup=True, use_second_order=False,
         init_plan_scheme='prev_opt',
         disc_grid=None, step_grid=None, vH_grid=None, vR_grid=None):
@@ -1502,9 +1503,9 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
         # ---------------------------------------------------------------------------------------------------
         # Basics.
 
-        PredictReactMaximizer.__init__(self, r_h, traj_h, r_r, traj_r, 
-            use_timeup=use_timeup, 
-            use_second_order=use_second_order, 
+        PredictReactMaximizer.__init__(self, r_h, traj_h, r_r, traj_r,
+            use_timeup=use_timeup,
+            use_second_order=use_second_order,
             update_with_curr_plan_fn=self.update_corners,
             init_plan_scheme=init_plan_scheme,
             init_grads=False)
@@ -1518,10 +1519,10 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
         # ---------------------------------------------------------------------------------------------------
         # Shared varables.
 
-        # Grid interpolation is done with the grid corners of the current grid 
-        # cell the state is in. These grid corners are shared variables which 
-        # are updated as the state is updated. Since the grid step lengths 
-        # are given, only the lower corners (self.cell_corners below) are needed 
+        # Grid interpolation is done with the grid corners of the current grid
+        # cell the state is in. These grid corners are shared variables which
+        # are updated as the state is updated. Since the grid step lengths
+        # are given, only the lower corners (self.cell_corners below) are needed
         # as shared variables.
         self.cell_corners = th.shared(np.zeros(self.n)) # corners of each box in grid
         # corners for human value function
@@ -1531,7 +1532,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
         # ---------------------------------------------------------------------------------------------------
         # Load grid data.
-        if (disc_grid is None or step_grid is None or vH_grid is None or 
+        if (disc_grid is None or step_grid is None or vH_grid is None or
                     vR_grid is None):
             self.disc_grid, self.step_grid, self.vH_grid, self.vR_grid = (
                 utils.load_grid_data(mat_name, n=self.n))
@@ -1550,7 +1551,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
         self.x_strat_func = th.function([], self.x_strat)
 
         def value_function(value_corners):
-            return HierarchicalMaximizer.value_function_fn(self.x_strat, 
+            return HierarchicalMaximizer.value_function_fn(self.x_strat,
                 self.cell_corners, value_corners, self.step_grid, self.n)
 
         self.vR = value_function(self.vR_corners) # robot value function
@@ -1573,13 +1574,13 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
     @staticmethod
     def value_function_fn(x_strat, cell_corners, value_corners, step_grid, n):
-        # Strategic value function computed using multilinear grid 
+        # Strategic value function computed using multilinear grid
         # interpolation.
         start_time = time.time()
         sumterms = []
         volume = step_grid.prod()
         for i in itertools.product(range(2), repeat=n):
-            partial_volume = [((-1)**(i[j]+1) * 
+            partial_volume = [((-1)**(i[j]+1) *
                                 (x_strat[j] - cell_corners[j]) +
                                 (1-i[j]) * step_grid[j]) for j in range(n)]
             partial_volume = np.asarray(partial_volume).prod() # convert to array to use prod.
@@ -1594,7 +1595,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
         # Update the corner values of the strategic cell grid by determining
         # which grid cell the current strategic state belongs to.
         cell_corners, vR_corners, vH_corners = (HierarchicalMaximizer
-            .update_corners_fn(self.x_strat_func(), self.n, 
+            .update_corners_fn(self.x_strat_func(), self.n,
                 self.disc_grid, self.vH_grid, self.vR_grid))
         self.cell_corners.set_value(cell_corners)
         self.vR_corners.set_value(vR_corners)
@@ -1607,7 +1608,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
         start_time = time.time()
         # outside (length n) has outside[i] True if the value of the strategi state
         # at that index is outside the strategic domain. Then either project back
-        # onto the strategic grid, or set the value function = 0 
+        # onto the strategic grid, or set the value function = 0
         # (i.e. just consider tactical reward)
         outside = []
         inds = []
@@ -1629,9 +1630,9 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
         # debugging
         # if outside:
-        #     print 'OUTSIDE grid interpolation!'
+        #     print('OUTSIDE grid interpolation!')
         # else:
-        #     print 'INSIDE grid interpolation'
+        #     print('INSIDE grid interpolation')
 
         cell_corners_new = np.array(cell_corners_new)
         # self.cell_corners.set_value(cell_corners_new)
@@ -1661,7 +1662,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
                     vH_corners_new[i] = vH_grid[gp_ind]
                     vR_corners_new[i] = vR_grid[gp_ind]
                 except Exception as e:
-                    print e
+                    print(e)
                     pdb.set_trace()
         # self.vH_corners.set_value(vH_corners_new)
         # self.vR_corners.set_value(vR_corners_new)
@@ -1676,7 +1677,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #     # while the terminal rewards given as the value functions of the strategic level
 #     # is loaded into the class as grids. To get the value from the value functions,
 #     # grid interpltion is used (see code below for details).
-#     def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n, 
+#     def __init__(self, r_h, traj_h, r_r, traj_r, mat_name, n,
 #         proj, use_timeup=True, use_second_order=False,
 #         disc_grid=None, step_grid=None, vH_grid=None, vR_grid=None):
 #         # The input parameters are:
@@ -1711,10 +1712,10 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # ---------------------------------------------------------------------------------------------------
 #         # Shared varables.
 
-#         # Grid interpolation is done with the grid corners of the current grid 
-#         # cell the state is in. These grid corners are shared variables which 
-#         # are updated as the state is updated. Since the grid step lengths 
-#         # are given, only the lower corners (self.cell_corners below) are needed 
+#         # Grid interpolation is done with the grid corners of the current grid
+#         # cell the state is in. These grid corners are shared variables which
+#         # are updated as the state is updated. Since the grid step lengths
+#         # are given, only the lower corners (self.cell_corners below) are needed
 #         # as shared variables.
 #         self.cell_corners = th.shared(np.zeros(self.n)) # corners of each box in grid
 #         # corners for human value function
@@ -1724,7 +1725,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
 #         # ---------------------------------------------------------------------------------------------------
 #         # Load grid data.
-#         if (disc_grid is None or step_grid is None or vH_grid is None or 
+#         if (disc_grid is None or step_grid is None or vH_grid is None or
 #                     vR_grid is None):
 #             self.disc_grid, self.step_grid, self.vH_grid, self.vR_grid = (
 #                 utils.load_grid_data(mat_name, n=self.n))
@@ -1740,7 +1741,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         self.x_strat_func = th.function([], self.x_strat)
 
 #         def value_function(value_corners):
-#             return HierarchicalMaximizer.value_function_fn(self.x_strat, 
+#             return HierarchicalMaximizer.value_function_fn(self.x_strat,
 #                 self.cell_corners, value_corners, self.step_grid, self.n)
 
 #         self.vR = value_function(self.vR_corners) # robot value function
@@ -1779,7 +1780,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
 #         # ------------------------------------------------------------------------------------------
 #         if use_second_order:
-#             # OPTION 1: Full derivative computation with Hessian inversion. 
+#             # OPTION 1: Full derivative computation with Hessian inversion.
 #             # SLOW, DEPRECATED
 #             # jacobian of (d human reward / d robot actions) w.r.t. human actions
 #             J = jacobian(grad(self.r_h, self.plan_r), self.plan_h)
@@ -1793,8 +1794,8 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         else:
 #             # OPTION 2: Partial derivative computation. FAST
 #             # (Only direct effect of robot action given current human action)
-#             # Below is the simplified derivative that neglects the second-order 
-#             # effect through human (and therefore avoids the heavy Hessian 
+#             # Below is the simplified derivative that neglects the second-order
+#             # effect through human (and therefore avoids the heavy Hessian
 #             # inversion)
 #             self.dr_r = grad(self.r_r, self.plan_r)
 #         # ------------------------------------------------------------------------------------------
@@ -1802,7 +1803,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # negative robot reward and its derivative
 #         self.func2 = th.function([], [-self.r_r, -self.dr_r])
 #         def r_r_and_dr_r(plan_r_0):
-#             """Get optimal human response, and return negative robot reward 
+#             """Get optimal human response, and return negative robot reward
 #             and its derivative.
 #             - plan_r_0: initial value for robot plan."""
 #             # set self.plan_r to the given (initial) plan_r_0
@@ -1818,13 +1819,13 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
 #     @staticmethod
 #     def value_function_fn(x_strat, cell_corners, value_corners, step_grid, n):
-#         # Strategic value function computed using multilinear grid 
+#         # Strategic value function computed using multilinear grid
 #         # interpolation.
 #         start_time = time.time()
 #         sumterms = []
 #         volume = step_grid.prod()
 #         for i in itertools.product(range(2), repeat=n):
-#             partial_volume = [((-1)**(i[j]+1) * 
+#             partial_volume = [((-1)**(i[j]+1) *
 #                                 (x_strat[j] - cell_corners[j]) +
 #                                 (1-i[j]) * step_grid[j]) for j in range(n)]
 #             partial_volume = np.asarray(partial_volume).prod() # convert to array to use prod.
@@ -1839,7 +1840,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # Update the corner values of the strategic cell grid by determining
 #         # which grid cell the current strategic state belongs to.
 #         cell_corners, vR_corners, vH_corners = (HierarchicalMaximizer
-#             .update_corners_fn(self.x_strat_func(), self.n, 
+#             .update_corners_fn(self.x_strat_func(), self.n,
 #                 self.disc_grid, self.vH_grid, self.vR_grid))
 #         self.cell_corners.set_value(cell_corners)
 #         self.vR_corners.set_value(vR_corners)
@@ -1850,7 +1851,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # Update the corner values of the strategic cell grid by determining
 #         # which grid cell the current strategic state belongs to.
 #         start_time = time.time()
-#         # outside is True if outside the strategic domain. Then value function = 0 
+#         # outside is True if outside the strategic domain. Then value function = 0
 #         # (i.e. just consider tactical reward)
 #         outside = False
 #         inds = []
@@ -1869,9 +1870,9 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 
 #         # debugging
 #         # if outside:
-#         #     print 'OUTSIDE grid interpolation!'
+#         #     print('OUTSIDE grid interpolation!')
 #         # else:
-#         #     print 'INSIDE grid interpolation'
+#         #     print('INSIDE grid interpolation')
 
 #         cell_corners_new = np.array(cell_corners_new)
 #         # self.cell_corners.set_value(cell_corners_new)
@@ -1894,7 +1895,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #                     vH_corners_new[i] = vH_grid[gp_ind]
 #                     vR_corners_new[i] = vR_grid[gp_ind]
 #                 except Exception as e:
-#                     print e
+#                     print(e)
 #                     pdb.set_trace()
 #         # self.vH_corners.set_value(vH_corners_new)
 #         # self.vR_corners.set_value(vR_corners_new)
@@ -1921,7 +1922,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #             else:
 #                 B += [(None, None)]*(b-a)
 #         # optimal human response, value, etc.
-#         opt_h = scipy.optimize.fmin_l_bfgs_b(self.r_h_and_dr_h, x0=plan_h_0, 
+#         opt_h = scipy.optimize.fmin_l_bfgs_b(self.r_h_and_dr_h, x0=plan_h_0,
 #                 bounds=B)
 #         opt_plan_h = opt_h[0] # optimal human response
 #         for v, (a, b) in zip(self.plan_h, self.control_indices_h):
@@ -1932,7 +1933,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         time_profile.maximize_inner_time_profile.update(start_time, end_time)
 #         return opt_h
 
-#     def maximize(self, bounds={}, bounds_inner={}, 
+#     def maximize(self, bounds={}, bounds_inner={},
 #                 maxiter_inner=config.NESTEDMAX_MAXITER_INNER):
 #         # Get optimal robot plan (controls) and human response using nested
 #         # optimization.
@@ -1949,9 +1950,9 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # version because at this point the Theano and numpy plans are the same?
 #         # plan_r_0 = np.hstack(self.traj_r.u) # initial robot plan (numpy version)
 #         plan_r_0 = np.hstack([v.get_value() for v in self.plan_r])
-        
+
 #         # optimal robot control, value, etc.
-#         opt_r = opt_timeup.fmin_l_bfgs_b_timeup(self.r_r_and_dr_r, 
+#         opt_r = opt_timeup.fmin_l_bfgs_b_timeup(self.r_r_and_dr_r,
 #             x0=plan_r_0, bounds=B, t0=start_time, timeup=self.timeup)
 #         opt_plan_r = opt_r[0] # optimal robot control
 
@@ -1962,7 +1963,7 @@ class PredictReactHierarchicalMaximizer(PredictReactMaximizer):
 #         # time profile of HierarchicalMaximizer
 #         maximize_end_time = time.time()
 #         time_profile.maximizer_time_profile.update(start_time, maximize_end_time)
-        
+
 #         # optimal human response, value, etc. to optimal robot control
 #         opt_h = self.maximize_inner(bounds=bounds_inner, maxiter=maxiter_inner)
 #         return opt_r, opt_h

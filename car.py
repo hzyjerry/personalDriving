@@ -4,7 +4,8 @@ import theano.tensor as tt
 
 import config
 import constants
-from optimizer import Maximizer, NestedMaximizer, HierarchicalMaximizer, PredictReactMaximizer, PredictReactHierarchicalMaximizer, IteratedBestResponseMaximizer, ILQRMaximizer
+from optimizer import Maximizer, NestedMaximizer, HierarchicalMaximizer, PredictReactMaximizer, PredictReactHierarchicalMaximizer, IteratedBestResponseMaximizer
+#ILQRMaximizer
 from planner import Planner, TwoCarPlanner, FixedControlPlanner
 from trajectory import Trajectory
 import utils
@@ -28,7 +29,7 @@ class Car(object):
         self.reward = None # car-specific
         self.planner = None # car-specific
         self.dyn = dyn
-    
+
     def reset(self, x0=None):
         # Reset car to given position, or to the car's initial position if x0 is None.
         self.traj.reset(x0)
@@ -80,13 +81,13 @@ class Car(object):
 
     @property
     def truck(self):
-        return self._truck   
+        return self._truck
     @truck.setter
     def truck(self, value):
         self._truck = value
         self.name_truck = self._truck.name
         self.traj_truck = self._truck.traj # car knows the truck trajectory
-        
+
 
 class UserControlledCar(Car):
     def __init__(self, x0, dt, dyn, bounds, horizon, color, name):
@@ -106,12 +107,12 @@ class RobotCar(Car):
 
     @property
     def human(self):
-        return self._human   
+        return self._human
     @human.setter
     def human(self, value):
         self._human = value
         self.name_h = self._human.name
-        self.traj_h = Trajectory(self._human.traj.x0, self._human.traj.dyn, 
+        self.traj_h = Trajectory(self._human.traj.x0, self._human.traj.dyn,
             self._human.traj.dt, self._human.horizon)
 
 class MaintainSpeedCar(RobotCar):
@@ -124,7 +125,7 @@ class SimpleOptimizerCar(RobotCar):
         # Initialize the planner with the optimizer.
         r = self.traj.reward(self.reward.reward_th, fw=tt)
         self.optimizer = Maximizer(r, self.traj.u_th)
-        self.planner = Planner(self.traj, self.optimizer, self.bounds, 
+        self.planner = Planner(self.traj, self.optimizer, self.bounds,
                                name=self.name)
 
 
@@ -148,10 +149,10 @@ class FollowerCar(Car):
         self.is_robot = False
         self.is_user_controlled = False
         self.is_follower = True
-    
+
     @property
     def robot(self):
-        return self._robot   
+        return self._robot
     @robot.setter
     def robot(self, value):
         self._robot = value
@@ -174,11 +175,11 @@ class NestedCar(RobotCar):
         r_r = self.traj.reward(self.reward.reward_th, fw=tt)
         r_h = self.traj_h.reward(self.reward_h.reward_th, fw=tt)
         # self.optimizer = NestedMaximizer(
-        #     r_h, self.traj_h, r_r, self.traj, 
+        #     r_h, self.traj_h, r_r, self.traj,
         #     use_second_order=self.use_second_order)
 
         self.optimizer = NestedMaximizer(
-            r_h, self.traj_h, r_r, self.traj, 
+            r_h, self.traj_h, r_r, self.traj,
             use_second_order=self.use_second_order,
             init_plan_scheme=init_plan_scheme)
         self.planner = TwoCarPlanner(self.traj, self.traj_h, self.human,
@@ -214,16 +215,16 @@ class PredictReactCar(NestedCar):
             # on how it chooses to initialize the human's belief of the robot's
             # plan).
             r_h = self.traj_h.reward(self.reward_h.reward_th, fw=tt)
-        
+
         self.optimizer = PredictReactMaximizer(
-            r_h, self.traj_h, r_r, self.traj, 
+            r_h, self.traj_h, r_r, self.traj,
             use_second_order=self.use_second_order,
             init_plan_scheme=init_plan_scheme)
         self.planner = TwoCarPlanner(self.traj, self.traj_h, self.human,
             self.optimizer, self.bounds, name=self.name)
 
 class HierarchicalCar(NestedCar):
-    def __init__(self, x0, dt, dyn, bounds, horizon, color, name, 
+    def __init__(self, x0, dt, dyn, bounds, horizon, color, name,
             mat_name, use_second_order, proj, strat_dim):
         # Non-obvious arguments:
         #  - mat_name: name of matlab
@@ -240,7 +241,7 @@ class HierarchicalCar(NestedCar):
         r_r = self.traj.reward(self.reward.reward_th, fw=tt)
         r_h = self.traj_h.reward(self.reward_h.reward_th, fw=tt)
         self.optimizer = HierarchicalMaximizer(
-            r_h, self.traj_h, r_r, self.traj, 
+            r_h, self.traj_h, r_r, self.traj,
             mat_name=self.mat_name, n=self.strat_dim, proj=self.proj.proj_th,
             traj_truck=self.traj_truck,
             use_second_order=self.use_second_order,
@@ -267,7 +268,7 @@ class PredictReactHierarchicalCar(HierarchicalCar):
             self.traj_truck = None
 
         self.optimizer = PredictReactHierarchicalMaximizer(
-            r_h, self.traj_h, r_r, self.traj, 
+            r_h, self.traj_h, r_r, self.traj,
             mat_name=self.mat_name, n=self.strat_dim, proj=self.proj.proj_th,
             traj_truck=self.traj_truck,
             use_second_order=self.use_second_order,
@@ -276,7 +277,7 @@ class PredictReactHierarchicalCar(HierarchicalCar):
         self.planner = TwoCarPlanner(self.traj, self.traj_h, self.human,
             self.optimizer, self.bounds, name=self.name)
 
-
+"""
 class ILQRCar(RobotCar):
     def init_planner(self, init_plan_scheme):
         r_h = self.traj_h.reward(self.reward_h.reward_torch, fw=torch)
@@ -287,8 +288,7 @@ class ILQRCar(RobotCar):
 
         self.planner = TwoCarPlanner(self.traj, self.traj_h, self.human,
             self.optimizer, self.bounds, name=self.name)
-
-
+"""
 
 
 

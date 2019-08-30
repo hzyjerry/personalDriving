@@ -1,6 +1,4 @@
 import pdb
-import thread
-import threading
 
 class Planner(object):
 	# Generates plans for the car.
@@ -45,7 +43,7 @@ class TwoCarPlanner(object):
 		self.name = name
 
 	def plan(self):
-		"""Generate new plans for robot and human, set them in the 
+		"""Generate new plans for robot and human, set them in the
 								corresponding trajectories, and return the robot plan."""
 		opt_r, opt_h = self.optimizer.maximize(bounds=self.bounds) # 1-D
 		plan_r, plan_h = opt_r, opt_h

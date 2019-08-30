@@ -50,7 +50,8 @@ WHEELBASE = 3
 # Options for the type of the human car
 HUMAN_CAR_OPTIONS = ['SimpleOptimizerCar', 'FollowerCar', 'UserControlledCar', 'MaintainSpeedCar', 'BadOptimizerCar']
 # Options for the type of the robot car
-ROBOT_CAR_OPTIONS = ['HierarchicalCar', 'NestedCar', 'SimpleOptimizerCar', 'PredictReactCar', 'PredictReactHierarchicalCar', 'IteratedBestResponseCar', 'ILQRCar']
+ROBOT_CAR_OPTIONS = ['HierarchicalCar', 'NestedCar', 'SimpleOptimizerCar', 'PredictReactCar', 'PredictReactHierarchicalCar', 'IteratedBestResponseCar']
+#, 'ILQRCar'
 # Physical dimensions of cars/trucks
 CAR_LENGTH = 0.148 # length of car
 CAR_WIDTH = 1.9 * METERS_TO_VIS # width of car
@@ -64,7 +65,7 @@ FRICTION = 0.016745192307692 # from DSG toolbox; old friction value: 0.023
 # old car control bounds: [(-0.124, 0.124), (-2*0.0878, 0.0878)]
 NO_BOUNDS = [(10, 10), (10, 10)]
 CAR_CONTROL_BOUNDS = [(-4*0.13/3, 4*0.13/3), (-8*0.0878, 4 * 0.0878)] #
-# Control bounds for human car in the hierarchical setup to get a numerically 
+# Control bounds for human car in the hierarchical setup to get a numerically
 # stable algorithm. Temporary solution!
 HIERARCHICAL_HUMAN_CONTROL_BOUNDS = [(-0.104, 0.104), (-0.0878, 0.0878)]
 TRUCK_CONTROL_BOUNDS = [(-5*0.0206, 0.0206)] # m/s^2
@@ -109,7 +110,7 @@ ACCELERATION_REWARD_SCALING = 1.0 / CAR_CONTROL_BOUNDS[1][1]
 
 
 # Fence reward
-# Steepness of fence rewards. Fence reward is fenceRefCost when vehicle is 
+# Steepness of fence rewards. Fence reward is fenceRefCost when vehicle is
 # fenceRefFraction * config.laneW away from the fence.
 FENCE_REF_COST = 0.1
 FENCE_REF_FRACTION = 0.3

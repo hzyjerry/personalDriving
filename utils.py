@@ -17,11 +17,11 @@ import time_profile
 
 # Sample in interaction history: (time, state, plan, tactical reward)
 Sample = namedtuple('Sample', ['t', 's', 'plan', 'r'])
-# Sample in interaction history for any car that computes a plan for the human 
-# and does not have a strategic value(e.g. NestedCar): 
+# Sample in interaction history for any car that computes a plan for the human
+# and does not have a strategic value(e.g. NestedCar):
 # (time, state, plan, predicted plan for human car, tactical reward)
 NestedCarSample = namedtuple('Sample', ['t', 's', 'plan', 'plan_h', 'tact_r'])
-# Sample in interaction history for HierarchicalCar: 
+# Sample in interaction history for HierarchicalCar:
 # (time, state, plan, predicted plan for human car, tactical reward, strategic value)
 HierarchicalCarSample = namedtuple('Sample', ['t', 's', 'plan', 'plan_h', 'tact_r', 'strat_val'])
 
@@ -67,7 +67,7 @@ def sigmoid(x, a, c, fw):
     return 1. / (1. + fw.exp(-1. * a * (x - c)))
 
 def interpolate_state(t, t1, t2, x1, x2):
-    # Return interpolated state at time t between states x1 and x2, 
+    # Return interpolated state at time t between states x1 and x2,
     # which occur at times t1 and t2 (respectively)
     if t1 == t2:
         return x1
@@ -82,7 +82,7 @@ def state_dict_to_list(state_dict):
     return [x, y, orientation, speed]
 
 def state_list_to_dict(state_list, time):
-    return {'x': state_list[0], 'y': state_list[1], 
+    return {'x': state_list[0], 'y': state_list[1],
     'orientation': state_list[2], 'speed': state_list[3], 'time': time}
 
 def viz_to_opends_control(steer_viz, gas_viz):
@@ -104,7 +104,7 @@ def load_grid_data(mat_name, n):
     vH_grid = mat['vH'] # the grid of the human value function.
     vR_grid = mat['vR'] # the grid of the robot value function.
 
-    # Replacing -inf and nan values with zero. These values happens outside the domain of the the 
+    # Replacing -inf and nan values with zero. These values happens outside the domain of the the
     # strategic level. They are here replaced with zero here to employ the tactic control which
     # (hopefully) guide the car back to the strategic domain.
     vH_grid[vH_grid == -np.inf]=0
@@ -121,7 +121,7 @@ def tact_to_strat_proj_3d(x_r, x_h):
     - x_r: robot x-coordinate
     - y_rel: relative y-coordinate of the robot with respect to the y coordinate
         of the human
-    - v_rel: the relative y-velocity of the robot with respect to the y-velocity 
+    - v_rel: the relative y-velocity of the robot with respect to the y-velocity
         of the human (x-velocity neglected)
     """
     return ([
@@ -131,14 +131,14 @@ def tact_to_strat_proj_3d(x_r, x_h):
     ])
 
 # def tact_to_strat_proj_3d_np(x_r, x_h):
-#     """Project the given robot and human tactical states to the 3D strategic 
+#     """Project the given robot and human tactical states to the 3D strategic
 #     state using numpy.
 
 #     The 3D strategic state is defined as [x_r, y_rel, v_rel], where
 #     - x_r: robot x-coordinate
 #     - y_rel: relative y-coordinate of the robot with respect to the y coordinate
 #         of the human
-#     - v_rel: the relative y-velocity of the robot with respect to the y-velocity 
+#     - v_rel: the relative y-velocity of the robot with respect to the y-velocity
 #         of the human (x-velocity neglected)
 #     """
 #     return np.array([
@@ -155,7 +155,7 @@ def tact_to_strat_proj_4d(x_r, x_h):
     - x_h: human x-coordinate
     - y_rel: relative y-coordinate of the robot with respect to the y coordinate
         of the human
-    - v_rel: the relative y-velocity of the robot with respect to the y-velocity 
+    - v_rel: the relative y-velocity of the robot with respect to the y-velocity
         of the human (x-velocity neglected)
     """
     return ([
@@ -166,7 +166,7 @@ def tact_to_strat_proj_4d(x_r, x_h):
     ])
 
 # def tact_to_strat_proj_4d_np(x_r, x_h):
-#     """Project the given robot and human tactical states to the 4D strategic 
+#     """Project the given robot and human tactical states to the 4D strategic
 #     state using numpy.
 
 #     The 4D strategic state is defined as [x_r, x_h, y_rel, v_rel], where
@@ -174,7 +174,7 @@ def tact_to_strat_proj_4d(x_r, x_h):
 #     - x_h: human x-coordinate
 #     - y_rel: relative y-coordinate of the robot with respect to the y coordinate
 #         of the human
-#     - v_rel: the relative y-velocity of the robot with respect to the y-velocity 
+#     - v_rel: the relative y-velocity of the robot with respect to the y-velocity
 #         of the human (x-velocity neglected)
 #     """
 #     return np.array([
@@ -244,12 +244,12 @@ def tact_to_strat_proj_truck_cut_in_6d(x_r, x_h, x_t):
 
 def strategic_reward_heatmap_coord(min_strat_state, max_strat_state, strat_dim,
         x_r=None, x_h=None, x_truck_func=None, project_onto_grid=True):
-    """Given the minimum strategic state, maximum strategic state, and tactical 
-    state x_r (x_h), give the minimum and maximum bounding coordinates (x, y) 
+    """Given the minimum strategic state, maximum strategic state, and tactical
+    state x_r (x_h), give the minimum and maximum bounding coordinates (x, y)
     for the strategic value of the other car (in custom vis units).
 
     - Note: Only one of the tactical states should be given as an argument.
-    - Note: The human is assumed to be in the left lane, which dictates its 
+    - Note: The human is assumed to be in the left lane, which dictates its
         x position.
 
     Arguments:

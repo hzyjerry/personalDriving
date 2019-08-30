@@ -25,7 +25,7 @@ class Rectangle(object):
 class TextWidget(object):
     def __init__(self, text, x, y, width, batch):
         self.document = pyglet.text.document.UnformattedDocument(text)
-        self.document.set_style(0, len(self.document.text), 
+        self.document.set_style(0, len(self.document.text),
             dict(color=(0, 0, 0, 255))
         )
         font = self.document.get_font()
@@ -40,7 +40,7 @@ class TextWidget(object):
 
         # Rectangular outline
         pad = 2
-        self.rectangle = Rectangle(x - pad, y - pad, 
+        self.rectangle = Rectangle(x - pad, y - pad,
                                    x + width + pad, y + height + pad, batch)
 
     def hit_test(self, x, y):
@@ -57,14 +57,14 @@ class Window(pyglet.window.Window):
                               color=(0, 0, 0, 255), batch=self.batch),
             pyglet.text.Label('Human:', x=10, y=60, anchor_y='bottom',
                               color=(0, 0, 0, 255), batch=self.batch),
-            # pyglet.text.Label('Special abilities', x=10, y=20, 
-            #                   anchor_y='bottom', color=(0, 0, 0, 255), 
+            # pyglet.text.Label('Special abilities', x=10, y=20,
+            #                   anchor_y='bottom', color=(0, 0, 0, 255),
             #                   batch=self.batch)
         ]
         self.widget_groups = ([
             [TextWidget('0', 100 + i * (50 + 5), 100, 50, self.batch) for i in range(4)],
             [TextWidget('0', 100 + i * (50 + 5), 60, 50, self.batch) for i in range(4)]
-        ])        
+        ])
         self.widgets = list(np.array(self.widget_groups).flatten())
         self.text_cursor = self.get_system_mouse_cursor('text')
 
@@ -111,12 +111,12 @@ class Window(pyglet.window.Window):
                     t = float(text)
                 self.focus.caret.on_text(text)
             except Exception as e:
-                print 'Not a valid number.'
+                print('Not a valid number.')
 
     def on_text_motion(self, motion):
         if self.focus:
             self.focus.caret.on_text_motion(motion)
-      
+
     def on_text_motion_select(self, motion):
         if self.focus:
             self.focus.caret.on_text_motion_select(motion)
@@ -138,7 +138,7 @@ class Window(pyglet.window.Window):
 
         elif symbol == pyglet.window.key.ESCAPE:
             pyglet.app.exit()
-        
+
     def set_focus(self, focus):
         if self.focus:
             self.focus.caret.visible = False

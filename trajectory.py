@@ -43,14 +43,14 @@ class Trajectory(object):
         self._u_torch = [torch.zeros(self.dyn_np.nu) for t in range(horizon)]
         # theano version of self.x
         self._x_torch = self.get_x(self._x0_torch, self._u_torch, self.dyn_torch)
-        
+
         # Start and stop indices of each control in the plan.
         self.control_indices = [a.shape[0] for a in self._u]
         for i in range(1,len(self.control_indices)):
             self.control_indices[i] += self.control_indices[i-1]
-        self.control_indices = [(0 if i==0 else self.control_indices[i-1], 
+        self.control_indices = [(0 if i==0 else self.control_indices[i-1],
             self.control_indices[i]) for i in range(len(self.control_indices))]
-        
+
         self.timestamp = None # timestamp of the beginning of this trajectory
 
     def reset(self, x0=None):
@@ -183,20 +183,20 @@ class Trajectory(object):
         assert(fw == np or fw == tt or fw == torch)
         # Make the reward function applied to the state trajectory
         # by calling self.x_from_x0 and using  the computational framework fw.
-        # Note: self.x_from_x0 is a function instead of a value so that the 
+        # Note: self.x_from_x0 is a function instead of a value so that the
         # current state trajectory can be used.
         @feature.feature
         def f(t, x, u):
             # Reward evaluated at time t (t=0 is the current state) when the
             # other car is at state x with plan u.
-            return Trajectory.r_gaussian(self.x_from_x0(fw)[t], x, fw, 
+            return Trajectory.r_gaussian(self.x_from_x0(fw)[t], x, fw,
                 length=length, width=width)
         return f
 
     @staticmethod
     def r_gaussian(this_x0, other_x0, fw, length=.14, width=.03):
         # length=.07, width=.03):
-        # Guassian reward around the point this_x0 when the other car is at 
+        # Guassian reward around the point this_x0 when the other car is at
         # state other_x.
         # Arguments:
         #  - this_x0: current state of this car
@@ -216,13 +216,13 @@ class Trajectory(object):
         assert(fw == np or fw == tt or fw==torch)
         # Make the reward function applied to the state trajectory
         # by calling self.x_from_x0 and using  the computational framework fw.
-        # Note: self.x_from_x0 is a function instead of a value so that the 
+        # Note: self.x_from_x0 is a function instead of a value so that the
         # current state trajectory can be used.
         @feature.feature
         def f(t, x, u):
             # Reward evaluated at time t (t=0 is the current state) when the
             # other car is at state x with plan u.
-            return Trajectory.r_gaussian(self.x_from_x0(fw)[t], x, fw, 
+            return Trajectory.r_gaussian(self.x_from_x0(fw)[t], x, fw,
                 length=length, width=width)
         return f
 
@@ -231,7 +231,7 @@ class Trajectory(object):
         assert(fw == np or fw == tt or fw == torch)
         # Make the reward function applied to the state trajectory
         # by calling self.x_from_x0 and using  the computational framework fw.
-        # Note: self.x_from_x0 is a function instead of a value so that the 
+        # Note: self.x_from_x0 is a function instead of a value so that the
         # current state trajectory can be used.
         @feature.feature
         def f(t, x, u):
@@ -265,13 +265,13 @@ class Trajectory(object):
         y_sigmoid = down + up
         return x_sigmoid * y_sigmoid
 
-    
+
     def not_behind(self, fw, weight):
         # Not behind (another car) penalty represeneted as sigmoids.
         assert(fw == np or fw == tt or fw == torch)
         # Make the reward function applied to the state trajectory
         # by calling self.x_from_x0 and using  the computational framework fw.
-        # Note: self.x_from_x0 is a function instead of a value so that the 
+        # Note: self.x_from_x0 is a function instead of a value so that the
         # current state trajectory can be used.
         # Define inverse operation depending on framework (Theano or otherwise)
         if fw == np:
@@ -311,7 +311,7 @@ class Trajectory(object):
                     self, fw, ha = 1/0.025, wa = 1/0.01,
                     own_length=.6957, own_width=2.6*constants.METERS_TO_VIS,
                     other_length=0.148, other_width=1.9*constants.METERS_TO_VIS):
-        # This minkowski sum is approximate in the sense that both vehicles 
+        # This minkowski sum is approximate in the sense that both vehicles
         # are assumed to be in the y-direction (fixed theta).
         # Height is in the y-direction while width is in the x-direction.
         assert(fw == np or fw == tt or fw == torch)
@@ -341,11 +341,11 @@ class Trajectory(object):
                 return term1*term2*term3*term4
             return f
         return make_f(self.x_from_x0, fw)
-        
+
 
     # TODO: implement x_func functionality like for gaussian and not_behind
     def minkowski_sum_1d(self, fw, h=1/0.025, own_length=.14, other_length=.14):
-        # This minkowski sum assumes what minkowski_sum_2d assumes plus that the 
+        # This minkowski sum assumes what minkowski_sum_2d assumes plus that the
         # vehicles are aligned in the y-direction.
         assert(fw == np or fw == tt or fw == torch)
         def make_f(x_func, fw):
@@ -370,9 +370,9 @@ class Trajectory(object):
             return f
         return make_f(self.x_from_x0, fw)
 
-    
+
     # TODO: update this function to match format of the other functions above)
-    def truck_tailing(self, fw, tailing_dist=0.6957+8.9597*constants.METERS_TO_VIS, 
+    def truck_tailing(self, fw, tailing_dist=0.6957+8.9597*constants.METERS_TO_VIS,
         weight=1):
         @feature.feature
         def f(t, x, u):
@@ -381,9 +381,9 @@ class Trajectory(object):
             c = self.x_th[t][1]-tailing_dist
             return weight*fw.exp(-(x[1]-c)**2/(2*0.05**2))
         return f
-    
+
     # TODO: update this function to match format of the other functions above)
-    def truck_tailing_quad(self, tailing_dist=0.6957+8.9597*constants.METERS_TO_VIS, weight=4./((7.*constants.METERS_TO_VIS)**2)): # is -4 at gap distance 16 meter. 
+    def truck_tailing_quad(self, tailing_dist=0.6957+8.9597*constants.METERS_TO_VIS, weight=4./((7.*constants.METERS_TO_VIS)**2)): # is -4 at gap distance 16 meter.
         @feature.feature
         def f(t, x, u):
             # Reward evaluated at time t (t=0 is the current state) when the
@@ -391,9 +391,9 @@ class Trajectory(object):
             c = self.x_th[t][1]-tailing_dist+0.018 # 0.018 is shift to get combined proxmity reward over 9 (8.9597) m.
             return -weight*(x[1]-c)**2
         return f
-    
+
     # TODO: update this function to match format of the other functions above)
-    def stay_inside_domain(self, fw, ha=1/0.025, 
+    def stay_inside_domain(self, fw, ha=1/0.025,
                            limit_dist=12*constants.METERS_TO_VIS, weight=100):
         # Elis: added to make trucks stay inside its DSG domain.
         if fw == tt:
@@ -401,7 +401,7 @@ class Trajectory(object):
         elif fw == th:
             inv = torch.reciprocal
         else:
-            inv = lambda x: 1.0 / x 
+            inv = lambda x: 1.0 / x
         @feature.feature
         def f(t,x,u):
             # Reward evaluated at time t (t=0 is the current state) when the
@@ -409,41 +409,41 @@ class Trajectory(object):
             c = self.x_th[t][1]-limit_dist
             return weight*inv(1+fw.exp(-ha*(x[1]-c)))
         return f
-    
+
     def reward(self, reward, fw):
         # Function for assembling the cumulative rewards.
         #
         # Important note concerning the index of state and control:
-        # The index of the state and the control are different in the sense that 
-        # x[0] is not x0 but u[0] is the first applied control. That is the state 
+        # The index of the state and the control are different in the sense that
+        # x[0] is not x0 but u[0] is the first applied control. That is the state
         # index is shifted one step ahead. This "miss" is okay as long as the state
-        # part and the control part in the reward above is additively separable, 
+        # part and the control part in the reward above is additively separable,
         # which is the case.
-        
+
         # Important comment concerning the hierarchical game and the last_reward:
-        # For the hierarchical game, this function assembles the tactic level with 
-        # last rewards determined by last_reward. The last_reward is a replacement 
-        # for the last added accumulative reward of the tactic horizon. If this was 
-        # not done (i.e. last_reward=None) and the value function were added with 
-        # this reward, then the end state of the tactic level (self.x_th[horizon]) 
-        # would both be included in the accumulative reward of the tactic level 
-        # (consider the last term in the list (*) below, and the note concerning 
-        # state and control index above) AND the cost-to-go by the value function 
-        # (the value functions is a function of the end state of the tactic level). 
-        # ince we do not want to count the end state twice, the last_reward omit 
-        # the state-dependent term from the tactic level, keeping just the control 
-        # part from the tactic level. Apart from the control part, last_reward might 
-        # also include the value function if possible. This is done in the platoon 
-        # cenario since the the value functions is on an analytical closed form 
-        # (neural network). In the car scenarios however, the value function is 
-        # given via grid interpolation that needs to be updated in the optimiation 
+        # For the hierarchical game, this function assembles the tactic level with
+        # last rewards determined by last_reward. The last_reward is a replacement
+        # for the last added accumulative reward of the tactic horizon. If this was
+        # not done (i.e. last_reward=None) and the value function were added with
+        # this reward, then the end state of the tactic level (self.x_th[horizon])
+        # would both be included in the accumulative reward of the tactic level
+        # (consider the last term in the list (*) below, and the note concerning
+        # state and control index above) AND the cost-to-go by the value function
+        # (the value functions is a function of the end state of the tactic level).
+        # ince we do not want to count the end state twice, the last_reward omit
+        # the state-dependent term from the tactic level, keeping just the control
+        # part from the tactic level. Apart from the control part, last_reward might
+        # also include the value function if possible. This is done in the platoon
+        # cenario since the the value functions is on an analytical closed form
+        # (neural network). In the car scenarios however, the value function is
+        # given via grid interpolation that needs to be updated in the optimiation
         # process. In this case, last_reward is just the control part.
 
         # align self.x{_th} and self.u{_th} properly in order to compute the reward.
-        # self.x{_th}[t] and self.u{_th}[t] should be the state and control applied 
+        # self.x{_th}[t] and self.u{_th}[t] should be the state and control applied
         # at time t. Prepend x0 to self.x{_th}, don't use self.x{_th}[-1] for the
         # tactical reward.
-        
+
         assert(fw == np or fw == tt or fw == torch)
         if fw == np:
             # x = self.x
@@ -460,10 +460,10 @@ class Trajectory(object):
             x = [self.x0_torch]
             x.extend(self.x_torch[:-1])
             return sum([reward(t, x[t], self.u_torch[t]) for t in range(self.horizon)])
-        
+
     def cum_reward(self, reward, fw):
-        # The first cumulative reward term. Note that use of the current state 
-        # (x0) and the first control (u[0]) (see the important note in the 
+        # The first cumulative reward term. Note that use of the current state
+        # (x0) and the first control (u[0]) (see the important note in the
         # reward function above.
         assert(fw == np or fw == tt or fw == torch)
         if fw == np:

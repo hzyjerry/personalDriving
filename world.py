@@ -18,7 +18,7 @@ from strategic_value import StrategicValue
 import utils
 
 class World(object):
-    def __init__(self, name, dt, cars, main_robot_car, main_human_car, lanes, 
+    def __init__(self, name, dt, cars, main_robot_car, main_human_car, lanes,
             roads, fences, objects=[], notices=[], feed_u=None, interaction_data=None):
         self.name = name
         self.cars = cars
@@ -38,7 +38,7 @@ class World(object):
         self.objects = objects
         self.notices = notices # show warnings when conditions are met.
         # simulates the dynamics and car movements
-        self.simulator = Simulator(self, dt=dt, feed_u=feed_u, 
+        self.simulator = Simulator(self, dt=dt, feed_u=feed_u,
                 interaction_data=interaction_data)
 
     def get_config(self):
@@ -101,11 +101,11 @@ def get_initial_states(scenario):
         x0_r = np.array([0.0, 0.0, np.pi/2., initial_speed_r])
         x0_h = np.array([0.0, 0.7, np.pi/2., initial_speed_h])
     elif scenario == 'easy_merging':
-        x0_r = np.array([constants.LEFT_LANE_CENTER + constants.LANE_WIDTH_VIS, 
+        x0_r = np.array([constants.LEFT_LANE_CENTER + constants.LANE_WIDTH_VIS,
             0.35, np.pi/2., initial_speed_r])
         x0_h = np.array([0.0, 0.0, np.pi/2., initial_speed_h])
     elif scenario == 'hard_merging':
-        x0_r = np.array([constants.LEFT_LANE_CENTER + constants.LANE_WIDTH_VIS, 
+        x0_r = np.array([constants.LEFT_LANE_CENTER + constants.LANE_WIDTH_VIS,
             0.0, np.pi/2., initial_speed_r])
         x0_h = np.array([0.0, 0.0, np.pi/2., initial_speed_h])
     elif scenario == 'truck_cut_in_human_in_front':
@@ -141,11 +141,11 @@ def get_initial_states(scenario):
     #     x0_t = np.array([constants.RIGHT_LANE_CENTER, 70. * constants.METERS_TO_VIS, np.pi/2., constants.TRUCK_CONSTANT_SPEED])
     #     return x0_r, x0_h, x0_t
     else:
-        print 'Error: unknown scenario: "{0}"'.format(scenario)
+        print('Error: unknown scenario: "{0}"'.format(scenario))
         sys.exit()
     return x0_r, x0_h
 
-def world_test(initial_states='far_overtaking', 
+def world_test(initial_states='far_overtaking',
         interaction_data=None, init_planner=True):
     # lanes
     center_lane = lane.StraightLane([0., -1.], [0., 1.], constants.LANE_WIDTH_VIS)
@@ -159,34 +159,34 @@ def world_test(initial_states='far_overtaking',
     dyn = dynamics.CarDynamics
     # cars
     x0_h = np.array([-constants.LANE_WIDTH_VIS, 0., np.pi/2., 0.3])
-    human_car = car.UserControlledCar(x0_h, constants.DT, dyn, 
-        constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+    human_car = car.UserControlledCar(x0_h, constants.DT, dyn,
+        constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
         color=constants.COLOR_H, name=constants.NAME_H)
     x0_r = np.array([0.0, 0.5, np.pi/2., 0.3])
-    robot_car = car.SimpleOptimizerCar(x0_r, constants.DT, dyn, 
-        constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+    robot_car = car.SimpleOptimizerCar(x0_r, constants.DT, dyn,
+        constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
         color=constants.COLOR_R, name=constants.NAME_R)
     cars = [robot_car, human_car]
 
     name = 'world_test'
-    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads, 
+    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads,
         fences)
 
     # rewards
-    robot_car.reward = reward.simple_reward(world, [human_car.traj_linear], 
+    robot_car.reward = reward.simple_reward(world, [human_car.traj_linear],
         speed=0.5)
 
     # initialize planners
     print("number of robot cars", len(world.robot_cars))
     for c in world.robot_cars:
         if hasattr(c, 'init_planner'):
-            print 'Initializing planner for ' + c.name
+            print('Initializing planner for ' + c.name)
             c.init_planner()
 
     return world
 
 
-def world_highway(initial_states='overtaking', 
+def world_highway(initial_states='overtaking',
         interaction_data=None, init_planner=True):
     # If very long horizon, increase bracket depth in Theano compilation to avoid
     # "fatal error: bracket nesting level exceeded maximum of 256."
@@ -217,6 +217,7 @@ def world_highway(initial_states='overtaking',
         strat_val_data_dir = config.STRATEGIC_VALUE_3D_DATA_DIR
     elif config.STRAT_DIM == 4:
         strat_val_data_dir = config.STRATEGIC_VALUE_4D_DATA_DIR
+    mat_name = None
     if fine_behind_h == True:
         if human_beta is None:
             print('Not using strategic value.')
@@ -265,50 +266,50 @@ def world_highway(initial_states='overtaking',
     initial_speed_r = constants.METERS_TO_VIS*32.0
     if config.ROBOT_CAR == 'car.HierarchicalCar' or config.ROBOT_CAR == 'car.PredictReactHierarchicalCar':
         car_class = eval(config.ROBOT_CAR)
-        robot_car = car_class(x0_r, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+        robot_car = car_class(x0_r, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_R, name=constants.NAME_R,
             mat_name=mat_name, use_second_order=config.USE_SECOND_ORDER,
             proj=proj, strat_dim=config.STRAT_DIM)
     elif config.ROBOT_CAR == 'car.NestedCar' or config.ROBOT_CAR == 'car.PredictReactCar':
         car_class = eval(config.ROBOT_CAR)
-        robot_car = car_class(x0_r, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+        robot_car = car_class(x0_r, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_R, name=constants.NAME_R,
             use_second_order=config.USE_SECOND_ORDER)
     elif config.ROBOT_CAR == 'car.IteratedBestResponseCar':
         robot_car = car.IteratedBestResponseCar(x0_r, constants.DT, dyn,
         constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
         color=constants.COLOR_R, name=constants.NAME_R)
-    elif config.ROBOT_CAR == 'car.IteratedBestResponseCar':
+    else:
+        print('"{0}" is currently an unsupported robot car type'.format(config.ROBOT_CAR))
+        sys.exit()
+    """elif config.ROBOT_CAR == 'car.IteratedBestResponseCar':
         robot_car = car.ILQRCar(x0_r, constants.DT, dyn,
         constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
         color=constants.COLOR_R, name=constants.NAME_R)
     elif config.ROBOT_CAR == 'car.ILQRCar':
         robot_car = car.ILQRCar(x0_r, constants.DT, dyn,
         constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
-        color=constants.COLOR_R, name=constants.NAME_R)
-    else:
-        print('"{0}" is currently an unsupported robot car type'.format(config.ROBOT_CAR))
-        sys.exit()
+        color=constants.COLOR_R, name=constants.NAME_R)"""
 
     # Human car setup
     # ref_speed_h = x0_h[3]
     ref_speed_h = constants.METERS_TO_VIS * 32.0
-    human_car = eval(config.HUMAN_CAR)(x0_h, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+    human_car = eval(config.HUMAN_CAR)(x0_h, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_H, name=constants.NAME_H)
-    
+
     # information structure
     robot_car.human = human_car # robot creates its own traj for human
     if human_car.is_follower: # give follower car access to the robot car
         human_car.robot = robot_car
     human_car.traj_r = robot_car.traj # human knows the robot traj
-    
+
     # world setup
     cars = [robot_car, human_car]
     name = 'world_hierarchical_overtaking'
-    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads, 
+    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads,
                 fences, interaction_data=interaction_data)
 
     # rewards
@@ -316,7 +317,7 @@ def world_highway(initial_states='overtaking',
     w_control = -0.1
     w_bounded_control_h = -50.0 # bounded control weight for human
     w_bounded_control_r = -50.0 # bounded control weight for robot
-    # Rewards and strategic value modeled by the robot 
+    # Rewards and strategic value modeled by the robot
     # (for both human and robot, respectively)
     if config.R_BELIEF_H_KNOWS_TRAJ_R: # robot believes human knows robot trajectory
         robot_r_h_traj = robot_car.traj
@@ -367,7 +368,7 @@ def world_highway(initial_states='overtaking',
         robot_car.strat_val = robot_strat_val
         robot_car.strat_val_h = robot_strat_val_h
 
-    # Rewards and strategic value modeled by the human WHEN SIMULATED 
+    # Rewards and strategic value modeled by the human WHEN SIMULATED
     # (for both human and robot, respectively)
     human_r_h = reward.Reward(world, [human_car.traj_r],
             w_lanes=w_lanes,
@@ -412,8 +413,8 @@ def world_highway(initial_states='overtaking',
     #         max(robot_strat_val.vH_grid.flatten()), max(robot_strat_val.vR_grid.flatten()),
     #         max(human_strat_val.vH_grid.flatten()), max(human_strat_val.vR_grid.flatten()),
     #         max(human_strat_val_r.vH_grid.flatten()), max(human_strat_val_r.vR_grid.flatten())])
-    
-    # print the configuration
+
+    # print(the configuration)
     pp = pprint.PrettyPrinter(indent=2)
     pp.pprint(world.get_config())
 
@@ -423,9 +424,9 @@ def world_highway(initial_states='overtaking',
         print('Initializing planners.')
         for c in world.cars:
             if hasattr(c, 'init_planner'):
-                print 'Initializing planner for ' + c.name
+                print('Initializing planner for ' + c.name)
                 c.init_planner(config.INIT_PLAN_SCHEME[c.name])
-                print '\n'
+                print('\n')
 
     return world
 
@@ -486,19 +487,19 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
     # Robot car setup
     ref_speed_r = constants.METERS_TO_VIS * 35.0
     if config.ROBOT_CAR == 'car.HierarchicalCar':
-        robot_car = car.HierarchicalCar(x0_r, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+        robot_car = car.HierarchicalCar(x0_r, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_R, name=constants.NAME_R,
             mat_name=mat_name, use_second_order=config.USE_SECOND_ORDER,
             proj=proj, strat_dim=config.STRAT_DIM)
     elif config.ROBOT_CAR == 'car.NestedCar':
-        robot_car = car.NestedCar(x0_r, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+        robot_car = car.NestedCar(x0_r, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_R, name=constants.NAME_R,
             use_second_order=config.USE_SECOND_ORDER)
     elif config.ROBOT_CAR == 'car.PredictReactCar':
-        robot_car = car.PredictReactCar(x0_r, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+        robot_car = car.PredictReactCar(x0_r, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_R, name=constants.NAME_R)
     elif config.ROBOT_CAR == 'car.IteratedBestResponseCar':
         robot_car = car.IteratedBestResponseCar(x0_r, constants.DT, dyn,
@@ -510,15 +511,15 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
 
     # Human car setup
     ref_speed_h = constants.METERS_TO_VIS * 32. # x0_h[3]
-    human_car = eval(config.HUMAN_CAR)(x0_h, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+    human_car = eval(config.HUMAN_CAR)(x0_h, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_H, name=constants.NAME_H)
-    
+
     # Truck setup
-    truck = car.Truck(x0_t, constants.DT, dyn, 
-            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON, 
+    truck = car.Truck(x0_t, constants.DT, dyn,
+            constants.CAR_CONTROL_BOUNDS, horizon=config.HORIZON,
             color=constants.COLOR_TRUCK, name=constants.NAME_TRUCK)
-    
+
 
     # Information structure
     robot_car.human = human_car # robot creates its own traj for human
@@ -527,11 +528,11 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
     human_car.traj_r = robot_car.traj # human knows the robot traj
     robot_car.truck = truck
     human_car.truck = truck
-    
+
     # world setup
     cars = [robot_car, human_car, truck]
     name = 'world_highway_truck_cut_in'
-    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads, 
+    world = World(name, constants.DT, cars, robot_car, human_car, lanes, roads,
                 fences, interaction_data=interaction_data)
 
     # rewards
@@ -539,7 +540,7 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
     w_control = -0.1
     w_bounded_control_h = -50.0 # bounded control weight for human
     w_bounded_control_r = -50.0 # bounded control weight for robot
-    # Rewards and strategic value modeled by the robot 
+    # Rewards and strategic value modeled by the robot
     # (for both human and robot, respectively)
     if config.R_BELIEF_H_KNOWS_TRAJ_R: # robot believes human knows robot trajectory
         robot_r_h_traj = robot_car.traj
@@ -569,7 +570,7 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
         # Robot's model of the human strategic value
         robot_strat_val_h = StrategicValue(robot_car.traj, robot_car.traj_h,
             proj, mat_name, config.STRAT_DIM, config.STRATEGIC_VALUE_SCALE,
-            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL, 
+            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL,
             traj_truck=truck.traj)
         # Robot's strategic value
         # TODO: just trying out human_car.traj to debug heatmap vis
@@ -578,12 +579,12 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
         #     min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL)
         robot_strat_val = StrategicValue(robot_car.traj, robot_car.traj_h,
             proj, mat_name, config.STRAT_DIM, config.STRATEGIC_VALUE_SCALE,
-            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL, 
+            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL,
             traj_truck=truck.traj)
         robot_car.strat_val = robot_strat_val
         robot_car.strat_val_h = robot_strat_val_h
 
-    # Rewards and strategic value modeled by the human WHEN SIMULATED 
+    # Rewards and strategic value modeled by the human WHEN SIMULATED
     # (for both human and robot, respectively)
     human_r_h = reward.Reward(world, [human_car.traj_r],
             other_truck_trajs=[truck.traj],
@@ -609,12 +610,12 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
         # Human's strategic value
         human_strat_val = StrategicValue(human_car.traj_r, human_car.traj,
             proj, mat_name, config.STRAT_DIM, config.STRATEGIC_VALUE_SCALE,
-            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL, 
+            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL,
             traj_truck=truck.traj)
         # Human's model of the robot strategic value
         human_strat_val_r = StrategicValue(human_car.traj_r, human_car.traj,
             proj, mat_name, config.STRAT_DIM, config.STRATEGIC_VALUE_SCALE,
-            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL, 
+            min_val=config.MIN_STRAT_VAL, max_val=config.MAX_STRAT_VAL,
             traj_truck=truck.traj)
         human_car.strat_val = human_strat_val
         human_car.strat_val_r = human_strat_val_r
@@ -640,9 +641,9 @@ def world_highway_truck_cut_in(initial_states='truck_cut_in_far_overtaking',
         print('Initializing planners.')
         for c in world.cars:
             if hasattr(c, 'init_planner'):
-                print 'Initializing planner for ' + c.name
+                print('Initializing planner for ' + c.name)
                 c.init_planner(config.INIT_PLAN_SCHEME[c.name])
-                print '\n'
+                print('\n')
 
     return world
 

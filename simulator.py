@@ -1,6 +1,4 @@
 import pdb
-import thread
-import threading
 import time
 
 import config
@@ -29,7 +27,7 @@ class Simulator(object):
 
     def simulate(self):
         """Get the car controls, move the cars, update time."""
-        print 'time: {0}'.format(self.time)
+        print('time: {0}'.format(self.time))
         if self.interaction_data is None:
             plans = self.plan()
             controls = [plan[0] for plan in plans] # first control in plan
@@ -52,7 +50,7 @@ class Simulator(object):
                 # are set by user input) and for follower cars (whose controls)
                 # are set by the robot.
                 if car.is_user_controlled or car.is_follower:
-                    plan = car.traj.u 
+                    plan = car.traj.u
                 else: # Only non-user-controlled cars generate plans
                     plan = car.plan()
                 plans.append(plan)
@@ -61,7 +59,7 @@ class Simulator(object):
                 control = controls[len(car.history)]
                 car.set_control(control)
                 plans.append([control])
-        
+
         # Append Sample to cars' interaction history
         for car, plan in zip(self.world.cars, plans):
             tact_r = None # tactical reward
@@ -69,7 +67,7 @@ class Simulator(object):
                 tact_r = car.reward.reward_np(0, car.traj.x0, plan[0])
             if isinstance(car, HierarchicalCar):
                 # compute strategic value for HierarchicalCar
-                strat_val = car.strat_val.value_r_np(self.time, car.traj.x0, 
+                strat_val = car.strat_val.value_r_np(self.time, car.traj.x0,
                                                     car.traj.u[0])
                 sample = utils.HierarchicalCarSample(
                     self.time, car.traj.x0, plan, car.traj_h.u, tact_r, strat_val)
@@ -97,7 +95,7 @@ class Simulator(object):
         """Set the car states to those described in the interaction data."""
         index = int(self.time / self.dt)
         if index >= len(self.interaction_data[0]):
-            print 'Finished interaction data. Pausing.'
+            print('Finished interaction data. Pausing.')
             topic_program.paused = True
             print("Robot Rewards, Robot_Human Rewards, Human_Human Rewards", self.rewards)
             return
